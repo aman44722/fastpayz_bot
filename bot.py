@@ -1,7 +1,5 @@
 import os
 import re
-import nest_asyncio
-import asyncio
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
@@ -9,17 +7,14 @@ from telegram.ext import (
     filters, ConversationHandler, ContextTypes
 )
 
-# Apply nested asyncio patch to fix "event loop already running" error
-nest_asyncio.apply()
-
 # Load environment variables
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 
-# States for conversation
+# States
 LANGUAGE, STEP1, STEP2, STEP3, STEP4, STEP5 = range(6)
 
-# Step 0 - Start
+# /start handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
     await update.message.reply_text(
@@ -28,23 +23,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     return LANGUAGE
 
-# Step 1 - Language
 async def select_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = update.message.text.lower()
     context.user_data['lang'] = 'hi' if 'hindi' in lang or 'हिन्दी' in lang else 'en'
 
-    msg = "क्या आप हमारे साथ कमाई करने के लिए तैयार हैं?" if context.user_data['lang'] == 'hi' else "Now check if you're the right fit to start earning with us. Ready?"
-    await update.message.reply_text(msg, reply_markup=ReplyKeyboardMarkup([['Yes']], resize_keyboard=True, one_time_keyboard=True))
+    if context.user_data['lang'] == 'hi':
+        await update.message.reply_text("क्या आप हमारे साथ कमाई करने के लिए तैयार हैं?", reply_markup=ReplyKeyboardMarkup([['Yes']], resize_keyboard=True, one_time_keyboard=True))
+    else:
+        await update.message.reply_text("Now check if you're the right fit to start earning with us. Ready?", reply_markup=ReplyKeyboardMarkup([['Yes']], resize_keyboard=True, one_time_keyboard=True))
     return STEP1
 
-# Step 2 - Investment
 async def step1(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = context.user_data.get("lang", "en")
     msg = "क्या आप कुछ शुरुआती निवेश करने के लिए तैयार हैं?" if lang == 'hi' else "Are you ready to do some Initial Investment?"
     await update.message.reply_text(msg, reply_markup=ReplyKeyboardMarkup([['Yes', 'No']], resize_keyboard=True, one_time_keyboard=True))
     return STEP2
 
-# Step 3 - Bank Account Check
 async def step2(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.text == "Yes":
         lang = context.user_data.get("lang", "en")
@@ -55,14 +49,12 @@ async def step2(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         return await step3(update, context)
 
-# Step 4 - Name
 async def step3(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = context.user_data.get("lang", "en")
     msg = "क्या मैं आपका नाम जान सकता हूँ?" if lang == 'hi' else "May I know your name?"
     await update.message.reply_text(msg)
     return STEP4
 
-# Step 5 - Validate Name
 async def step4(update: Update, context: ContextTypes.DEFAULT_TYPE):
     name = update.message.text.strip()
     if any(char.isdigit() for char in name):
@@ -74,7 +66,6 @@ async def step4(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(msg)
     return STEP5
 
-# Step 6 - Validate Phone and Send Final Msg
 async def step5(update: Update, context: ContextTypes.DEFAULT_TYPE):
     phone = update.message.text.strip()
     if not re.match(r"^(\+91[\s\-]?)?[6-9]\d{9}$", phone):
@@ -84,36 +75,40 @@ async def step5(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = context.user_data.get("lang", "en")
     name = context.user_data["name"]
 
-    msg_hi = (
-        f"धन्यवाद {name}! 🎉\n\nअब इन चरणों का पालन करें:\n1. ऐप इंस्टॉल करें\n2. रजिस्टर करें\n"
-        f"3. बैंक विवरण जोड़ें\n4. प्रारंभिक जमा करें\n5. कमाई शुरू करें\n\nहमारी टीम आपसे जल्द संपर्क करेगी: {phone}\n"
-        f"📲 [डाउनलोड करें](https://downloadapp.psrtilhtnd.com/FastpayZ.apk)"
-    )
-    msg_en = (
-        f"Thanks {name}! 🎉\n\nSteps to get started:\n1. Install the App\n2. Register\n3. Add Bank Details\n"
-        f"4. Make Initial Deposit\n5. Start Earning\n\nOur team will reach out to you soon: {phone}\n"
-        f"📲 [Download App](https://downloadapp.psrtilhtnd.com/FastpayZ.apk)"
-    )
+    if lang == 'hi':
+        await update.message.reply_text(
+            f"धन्यवाद {name}! 🎉\n\nअब इन चरणों का पालन करें:\n1. ऐप इंस्टॉल करें\n2. रजिस्टर करें\n3. बैंक विवरण जोड़ें\n4. प्रारंभिक जमा करें\n5. कमाई शुरू करें\n\nहमारी टीम आपसे जल्द संपर्क करेगी: {phone}\n📲 [डाउनलोड करें](https://downloadapp.psrtilhtnd.com/FastpayZ.apk)",
+            parse_mode='Markdown'
+        )
+    else:
+        await update.message.reply_text(
+            f"Thanks {name}! 🎉\n\nSteps to get started:\n1. Install the App\n2. Register\n3. Add Bank Details\n4. Make Initial Deposit\n5. Start Earning\n\nOur team will reach out to you soon: {phone}\n📲 [Download App](https://downloadapp.psrtilhtnd.com/FastpayZ.apk)",
+            parse_mode='Markdown'
+        )
 
-    await update.message.reply_text(msg_hi if lang == 'hi' else msg_en, parse_mode="Markdown")
-
-    # Try sending video
+    # Optional video
     try:
         with open("videoplayback.mp4", "rb") as video:
             await update.message.reply_video(video, caption="📹 Watch this quick intro to get started with FastPayz!")
     except FileNotFoundError:
-        await update.message.reply_text("🎥 Video not found, but you're all set!")
+        await update.message.reply_text("🎥 Video file not found, but you're all set!")
 
     return ConversationHandler.END
 
-# Help and Info Commands
+# Help & Info Commands
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📩 Need help? Message us here: @Fastpayzapp")
 
 async def info_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "💬 Welcome to FastPayz Support Bot!\nFastPayz is India's trusted wallet platform that lets you earn commissions by becoming a Wallet Agent.\n"
-        "👉 Tap the menu or type your query to get started!"
+        "💬 Welcome to FastPayz Support Bot!\n"
+        "FastPayz is India's trusted wallet platform that lets you earn commissions by becoming a Wallet Agent. Whether you're looking to register, understand how payouts work, or need help with your account — we're here 24/7.\n"
+        "🚀 Get quick answers to common questions\n"
+        "💰 Learn how to earn through your bank account\n"
+        "🛡 Know about safety & verification steps\n"
+        "🔧 Troubleshoot login or registration issues\n"
+        "Tap the menu or type your query to get started!\n"
+        "👉 Start now and become part of India’s fastest-growing payout platform with FastPayz.\n"
     )
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -123,8 +118,8 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def fallback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❗ Unrecognized input. Type /start to begin again.")
 
-# Main function
-async def main():
+# Main Bot App
+if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
@@ -151,8 +146,4 @@ async def main():
     app.add_handler(CommandHandler("info", info_command))
 
     print("🚀 FastPayz Bot is running...")
-    await app.run_polling()
-
-# Run Bot
-if __name__ == "__main__":
-    asyncio.run(main())
+    app.run_polling()
