@@ -1,11 +1,13 @@
 import os
 import re
+import sys
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, MessageHandler,
     filters, ConversationHandler, ContextTypes
 )
+print(f"Running Python Version: {sys.version}")
 
 # Load environment variables
 load_dotenv()
