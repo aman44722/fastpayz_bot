@@ -1,13 +1,11 @@
 import os
 import re
-import sys
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, MessageHandler,
     filters, ConversationHandler, ContextTypes
 )
-print(f"Running Python Version: {sys.version}")
 
 # Load environment variables
 load_dotenv()
@@ -126,7 +124,7 @@ if __name__ == "__main__":
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
-        states={
+        states={ 
             LANGUAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_language)],
             STEP1: [MessageHandler(filters.TEXT & ~filters.COMMAND, step1)],
             STEP2: [MessageHandler(filters.TEXT & ~filters.COMMAND, step2)],
@@ -134,7 +132,7 @@ if __name__ == "__main__":
             STEP4: [MessageHandler(filters.TEXT & ~filters.COMMAND, step4)],
             STEP5: [MessageHandler(filters.TEXT & ~filters.COMMAND, step5)],
         },
-        fallbacks=[
+        fallbacks=[ 
             CommandHandler("help", help_command),
             CommandHandler("info", info_command),
             CommandHandler("cancel", cancel),
