@@ -15,6 +15,9 @@ TOKEN = os.getenv("BOT_TOKEN")
 # States
 LANGUAGE, STEP1, STEP2, STEP3, STEP4, STEP5 = range(6)
 
+# Get the port from the environment variable
+PORT = os.getenv("PORT", 8000)  # Use 8000 if not provided
+
 # /start handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
