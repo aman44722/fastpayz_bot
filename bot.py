@@ -1,5 +1,6 @@
 import os
 import re
+import nest_asyncio
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
@@ -120,6 +121,9 @@ async def fallback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Main Bot App
 if __name__ == "__main__":
+    import nest_asyncio
+    nest_asyncio.apply()  # This allows running the event loop in environments where it's already running.
+
     app = ApplicationBuilder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
