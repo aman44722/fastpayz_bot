@@ -92,7 +92,7 @@ async def step5(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Optional video
     try:
-        with open("videoplayback.mp4", "rb") as video:
+        with open("./videoplayback.mp4", "rb") as video:
             await update.message.reply_video(video, caption="📹 Watch this quick intro to get started with FastPayz!")
     except FileNotFoundError:
         await update.message.reply_text("🎥 Video file not found, but you're all set!")
