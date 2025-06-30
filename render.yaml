@@ -5,3 +5,4 @@ services:
     python_version: "3.11.0"
     build_command: pip install -r requirements.txt
     start_command: python bot.py
+    port: 8000
